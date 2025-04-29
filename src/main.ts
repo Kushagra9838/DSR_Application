@@ -3,19 +3,21 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppLogger } from './logger/winston-logger.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableVersioning({
-    type: VersioningType.URI, // Use URI versioning (e.g., /v1/resource)
-    defaultVersion: '1', // Default version if no version is specified
+    type: VersioningType.URI,
+    defaultVersion: '1', 
   });
 
+  const configService = app.get(ConfigService);
   const logger = app.get(AppLogger);
   app.useGlobalPipes(new ValidationPipe());
 
-  const port = process.env.PORT ?? 3000;
+  const port = configService.get<number>('PORT')!;
   logger.log(`Application is starting on port ${port}`);
   await app.listen(port);
 }

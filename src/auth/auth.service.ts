@@ -3,30 +3,35 @@ import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt'
-import { User } from 'src/user/model/user.model';
-import { InjectModel } from '@nestjs/sequelize';
 import { JwtService } from '@nestjs/jwt';
 import { ForgetPasswordDto } from './dto/forgetPassword.dto';
 import Redis from 'ioredis';
 import * as nodemailer from 'nodemailer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
 
+  private transporter: nodemailer.Transporter;
+
     constructor(
         private readonly userService: UserService,
         private jwtService: JwtService,
-        @Inject('REDIS_CLIENT') private readonly redis: Redis
+        @Inject('REDIS_CLIENT') private readonly redis: Redis,
+        private readonly configService: ConfigService,
         // @InjectModel(User) private userModel: typeof User
-    ) { }
-
-    private transporter = nodemailer.createTransport({
-        service: 'gmail', 
+    ) { 
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail',
         auth: {
-          user: 'kushagra.gupta@appinventiv.com',
-          pass: 'aizn yfxu vbte ifpv',
+          user: this.configService.get<string>('EMAIL_USER'),
+          pass: this.configService.get<string>('EMAIL_PASS'),
         },
       });
+    }
+
+    
+    
 
     async signup(signupDto: SignupDto) {
         const saltRounds = 10;

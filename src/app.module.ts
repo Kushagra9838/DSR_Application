@@ -3,26 +3,28 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { DsrModule } from './dsr/dsr.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [AuthModule, UserModule,
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '12345',
-      database: 'postgres',
-      autoLoadModels: true,
-      synchronize: true,
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        dialect: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: parseInt(configService.get<string>('DB_PORT')!, 10),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
+        autoLoadModels: true,
+        synchronize: true,
+      }),
     }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    AuthModule,
+    UserModule,
     DsrModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
